@@ -6,10 +6,10 @@
 **git clone https://github.com/nicolestory/comp4320_proj1**
 
 ### To compile:
-**javac TCPServer.java TCPClient.java**
+**javac UDPServer.java UDPClient.java**
 
 ### To run:
-**java TCPServer**
+**java UDPServer**
 or
-**java TCPClient**
+**java UDPClient**
 (should have command line args soon)
