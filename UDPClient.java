@@ -2,23 +2,51 @@ import java.io.*;
 import java.net.*;
 
 class UDPClient {
+
+   private static String serverHostname = "tux059";
+   private static int portNumber = 10052;
+
    public static void main(String args[]) throws Exception
    {
+      if (!parse_args(args))
+         return;
+         
+      System.out.println("UDP Server Hostname: " + serverHostname);
+      System.out.println("Port Number: " + portNumber);
+      
       BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
       DatagramSocket clientSocket = new DatagramSocket();
-      InetAddress IPAddress = InetAddress.getByName("hostname");
+      InetAddress IPAddress = InetAddress.getByName(serverHostname);
       byte[] sendData = new byte[1024];
       byte[] receiveData = new byte[1024];
       String sentence = inFromUser.readLine();
       sendData = sentence.getBytes();
      
-      DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+      DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, portNumber);
       clientSocket.send(sendPacket);
+      System.out.println("Sent a packet!");
       DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
       clientSocket.receive(receivePacket);
       String modifiedSentence = new String(receivePacket.getData());
-      System.out.println("FROM SERVER:" + modifiedSentence);
-      clientSocket.close();
+      System.out.println("FROM SERVER: " + modifiedSentence);
+      clientSocket.close(); 
+   }
+   
+   private static boolean parse_args(String args[])
+   {
+      if (args.length >= 2)
+      {
+         serverHostname = args[0];
+         int tempPortNumber = Integer.parseInt(args[1]);
+         if ((10052 > tempPortNumber) || (tempPortNumber > 10055))
+         {
+            System.out.println("Port " + tempPortNumber + " is out of our port range.");
+            System.out.println("Try a port between 10052 and 10055");
+            return false;
+         }
+         portNumber = tempPortNumber;
+      }
+      return true;
    }
   public static boolean errorDetected(byte[] receiveData) {
       int checkSum;
