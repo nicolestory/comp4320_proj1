@@ -5,6 +5,7 @@ class UDPClient {
 
    private static String serverHostname = "tux059";
    private static int portNumber = 10052;
+   private static double gremlinProbability = 0.0;
 
    public static void main(String args[]) throws Exception
    {
@@ -13,6 +14,7 @@ class UDPClient {
          
       System.out.println("UDP Server Hostname: " + serverHostname);
       System.out.println("Port Number: " + portNumber);
+      System.out.println("Gremlin Probability: " + gremlinProbability);
       
       BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
       DatagramSocket clientSocket = new DatagramSocket();
@@ -45,6 +47,18 @@ class UDPClient {
             return false;
          }
          portNumber = tempPortNumber;
+         
+         if (args.length >= 3)
+         {
+            double tempGremlin = Double.parseDouble(args[2]);
+            if ((0.0 > tempGremlin) || (tempGremlin > 1.0))
+            {
+               System.out.println("The probability " + tempGremlin + " is not valid.");
+               System.out.println("Try a decimal value between 0.0 and 1.0");
+               return false;
+            }
+            gremlinProbability = tempGremlin;
+         }
       }
       return true;
    }
