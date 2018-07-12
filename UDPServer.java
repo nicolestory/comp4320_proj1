@@ -47,12 +47,19 @@ class UDPServer {
       }
       return true;
    }
-     public static boolean errorDetected(byte[] receiveData) {
+    public static boolean errorDetected(byte[] receiveData) {
       int checkSum;
       boolean errorExists = false;
       String originalMessage = new String(receiveData);
+      
+      if (errorExists) {
+         String packetInfo = new String(receiveData);
+         System.out.println("\nAn error was detected in the following packet: ");
+         System.out.println(originalMessage);
+         System.out.println("\nTime Out!");
+      }
       return errorExists;
-   }
+    }
       public static int checkSum(byte[] sendData) {
       int sum = 0;
    
