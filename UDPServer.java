@@ -20,4 +20,18 @@ class UDPServer {
          serverSocket.send(sendPacket);
       }
    }
+     public static boolean errorDetected(byte[] receiveData) {
+      int checkSum;
+      boolean errorExists = false;
+      String originalMessage = new String(receiveData);
+      return errorExists;
+   }
+      public static int checkSum(byte[] sendData) {
+      int sum = 0;
+   
+      for (int i = 0; i < sendData.length; i++) {
+         sum += (int) sendData[i];
+      }
+      return sum;
+   }
 }
