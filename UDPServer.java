@@ -69,17 +69,20 @@ class UDPServer {
       return sum;
    }
 
-	public static String parseRequest(String request) {
+	public static String[] parseRequest(String request) {
 		String parsedSoFar = "";
 		String file = "";
 		int fileSize = 0;
+		String[] s = new String[2];
+		s[0] = "Invalid request";
+		s[1] = file;
 
 		if (request.length() < 14) {
-			return "Invalid request";
+			return s;
 		}
 		
 		if (!request.substring(0, 4).equals("GET ")) {
-			return "Invalid request";
+			return s;
 		}
 
 		parsedSoFar = request.substring(4, request.length());
@@ -90,13 +93,23 @@ class UDPServer {
 			counter++;
 		}
 
+		file = parsedSoFar.substring(0, counter);
+
+		parsedSoFar = parsedSoFar.substring(file.length() + 1, parsedSoFar.length()).trim();
+
+		if (!parsedSoFar.equals("HTTP/1.0")) {
+			return s;
+		}
+
 		File f = new File(file);
 
 		if (f.exists()) {
-			return "HTTP/1.0 200 Document Follows \r\nContent-Type: text/plain\r\nContent-Length: " + f.length() + "\r\n\r\n" + file;
+			s[0] = "HTTP/1.0 200 Document Follows \r\nContent-Type: text/plain\r\nContent-Length: " + f.length() + "\r\n\r\n" + file;
+			s[1] = file;
 		}
 		else {
-			return "Error: File not found";
+			s[0] = "Error: File not found";
 		}
+		return s;
 	}
 }	
