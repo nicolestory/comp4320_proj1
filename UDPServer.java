@@ -68,4 +68,35 @@ class UDPServer {
       }
       return sum;
    }
-}
+
+	public static String parseRequest(String request) {
+		String parsedSoFar = "";
+		String file = "";
+		int fileSize = 0;
+
+		if (request.length() < 14) {
+			return "Invalid request";
+		}
+		
+		if (!request.substring(0, 4).equals("GET ")) {
+			return "Invalid request";
+		}
+
+		parsedSoFar = request.substring(4, request.length());
+		
+		int counter = 0;
+
+		while (parsedSoFar.charAt(counter) != ' ') {
+			counter++;
+		}
+
+		File f = new File(file);
+
+		if (f.exists()) {
+			return "HTTP/1.0 200 Document Follows \r\nContent-Type: text/plain\r\nContent-Length: " + f.length() + "\r\n\r\n" + file;
+		}
+		else {
+			return "Error: File not found";
+		}
+	}
+}	
