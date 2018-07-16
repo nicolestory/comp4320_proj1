@@ -29,11 +29,11 @@ class UDPClient {
      
       DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, portNumber);
       clientSocket.send(sendPacket);
-      System.out.println("Sent a packet!");
+      System.out.println("Sent a packet!\n");
       DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
       clientSocket.receive(receivePacket);
       String modifiedSentence = new String(receivePacket.getData());
-      System.out.println("FROM SERVER: " + modifiedSentence);
+      System.out.println("Message from UDP Server:\n" + modifiedSentence);
       clientSocket.close(); 
    }
    
