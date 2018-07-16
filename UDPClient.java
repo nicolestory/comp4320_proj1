@@ -6,6 +6,7 @@ class UDPClient {
    private static String serverHostname = "tux059";
    private static int portNumber = 10052;
    private static double gremlinProbability = 0.0;
+   private static String fileName = "TestFile.html";
 
    public static void main(String args[]) throws Exception
    {
@@ -15,14 +16,16 @@ class UDPClient {
       System.out.println("UDP Server Hostname: " + serverHostname);
       System.out.println("Port Number: " + portNumber);
       System.out.println("Gremlin Probability: " + gremlinProbability);
+      System.out.println("File Name: " + fileName);
       
-      BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
+      String request = "GET " + fileName + " HTTP/1.0";
+      System.out.println("Request: " + request);
+      
       DatagramSocket clientSocket = new DatagramSocket();
       InetAddress IPAddress = InetAddress.getByName(serverHostname);
       byte[] sendData = new byte[1024];
       byte[] receiveData = new byte[1024];
-      String sentence = inFromUser.readLine();
-      sendData = sentence.getBytes();
+      sendData = request.getBytes();
      
       DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, portNumber);
       clientSocket.send(sendPacket);
@@ -59,10 +62,15 @@ class UDPClient {
             }
             gremlinProbability = tempGremlin;
          }
+         
+         if (args.length >= 4)
+         {
+            fileName = args[3];
+         }
       }
       return true;
    }
-  public static boolean errorDetected(byte[] receiveData) {
+   public static boolean errorDetected(byte[] receiveData) {
       int checkSum;
       boolean errorExists = false;
       String originalMessage = new String(receiveData);
@@ -122,5 +130,38 @@ class UDPClient {
          message[i] = 48;
       }
       return message;
+   }
+   
+   public static byte[][] gremlin(byte[][] packets, double probability) {
+      if (probability == 0.0)
+      {
+         System.out.println("No Gremlins are attacking today. Carry on.");
+         return packets;
+      }
+      System.out.println("Gremlins are attacking!");
+      for (byte[] packet : packets) {
+         double changePacketProbability = Math.random();
+         if (changePacketProbability <= gremlinProbability) {
+            System.out.println("A gremlin got a packet!");
+            damagePacket(packet);
+         }
+      }
+      return packets;
+   }
+   public static void damagePacket(byte[] packet) {
+      int numBytesDamaged = 3;
+      double randNumBytesDamaged = Math.random();
+      if (randNumBytesDamaged < 0.5) {
+         numBytesDamaged = 1;
+      } else if (randNumBytesDamaged < 0.8) {
+         numBytesDamaged = 2;
+      }
+      
+      for (int i = 0; i < numBytesDamaged; i++) {
+         int byteToChange = (int) Math.random() * packet.length;
+         // TODO: check for duplicates?
+         //xor(packet, byteToChange);
+         packet[byteToChange] = (byte) (packet[byteToChange] ^ 0b1111111);
+      }
    }
 }
