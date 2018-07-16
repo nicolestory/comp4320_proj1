@@ -24,8 +24,12 @@ class UDPServer {
          String sentence = new String(receivePacket.getData());
          InetAddress IPAddress = receivePacket.getAddress();
          int port = receivePacket.getPort();
-         String capitalizedSentence = sentence.toUpperCase();
-         sendData = capitalizedSentence.getBytes();
+         String[] result = parseRequest(sentence);
+         System.out.println(result[0]);
+         System.out.println(result[1]);
+         String response = result[0];
+         //String capitalizedSentence = sentence.toUpperCase();
+         sendData = response.getBytes();
          DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
          serverSocket.send(sendPacket);
          System.out.println("Sent the packet back.");
@@ -47,7 +51,7 @@ class UDPServer {
       }
       return true;
    }
-    public static boolean errorDetected(byte[] receiveData) {
+   public static boolean errorDetected(byte[] receiveData) {
       int checkSum;
       boolean errorExists = false;
       String originalMessage = new String(receiveData);
@@ -59,8 +63,8 @@ class UDPServer {
          System.out.println("\nTime Out!");
       }
       return errorExists;
-    }
-      public static int checkSum(byte[] sendData) {
+   }
+   public static int checkSum(byte[] sendData) {
       int sum = 0;
    
       for (int i = 0; i < sendData.length; i++) {
@@ -69,47 +73,63 @@ class UDPServer {
       return sum;
    }
 
-	public static String[] parseRequest(String request) {
-		String parsedSoFar = "";
-		String file = "";
-		int fileSize = 0;
-		String[] s = new String[2];
-		s[0] = "Invalid request";
-		s[1] = file;
-
-		if (request.length() < 14) {
-			return s;
-		}
-		
-		if (!request.substring(0, 4).equals("GET ")) {
-			return s;
-		}
-
-		parsedSoFar = request.substring(4, request.length());
-		
-		int counter = 0;
-
-		while (parsedSoFar.charAt(counter) != ' ') {
-			counter++;
-		}
-
-		file = parsedSoFar.substring(0, counter);
-
-		parsedSoFar = parsedSoFar.substring(file.length() + 1, parsedSoFar.length()).trim();
-
-		if (!parsedSoFar.equals("HTTP/1.0")) {
-			return s;
-		}
-
-		File f = new File(file);
-
-		if (f.exists()) {
-			s[0] = "HTTP/1.0 200 Document Follows \r\nContent-Type: text/plain\r\nContent-Length: " + f.length() + "\r\n\r\n" + file;
-			s[1] = file;
-		}
-		else {
-			s[0] = "Error: File not found";
-		}
-		return s;
-	}
+   public static String[] parseRequest(String request) {
+      String parsedSoFar = "";
+      String file = "";
+      int fileSize = 0;
+      String[] s = new String[2];
+      s[0] = "Invalid request";
+      s[1] = file;
+   
+      if (request.length() < 14) {
+         return s;
+      }
+   	
+      if (!request.substring(0, 4).equals("GET ")) {
+         return s;
+      }
+   
+      parsedSoFar = request.substring(4, request.length());
+   	
+      int counter = 0;
+   
+      while (parsedSoFar.charAt(counter) != ' ') {
+         counter++;
+      }
+   
+      file = parsedSoFar.substring(0, counter);
+   
+      parsedSoFar = parsedSoFar.substring(file.length() + 1, parsedSoFar.length()).trim();
+   
+      if (!parsedSoFar.equals("HTTP/1.0")) {
+         return s;
+      }
+   
+      File f = new File(file);
+      
+      String fileText = "";
+      try
+      {
+         BufferedReader br = new BufferedReader(new FileReader(file));
+         for (String line; (line = br.readLine()) != null;) {
+            System.out.print(line);
+            fileText += line + "\n";
+         }
+         br.close();
+      }
+      catch (Exception e)
+      {
+         System.out.println("Oh no.");
+         return s;
+      }
+   
+      if (f.exists()) {
+         s[0] = "HTTP/1.0 200 Document Follows \r\nContent-Type: text/plain\r\nContent-Length: " + f.length() + "\r\n\r\n" + fileText;
+         s[1] = file;
+      }
+      else {
+         s[0] = "Error: File not found";
+      }
+      return s;
+   }
 }	
