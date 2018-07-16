@@ -25,14 +25,15 @@ class UDPServer {
          InetAddress IPAddress = receivePacket.getAddress();
          int port = receivePacket.getPort();
          String[] result = parseRequest(sentence);
+         byte[][] packets = segmentation(result[1]);
          System.out.println(result[0]);
          System.out.println(result[1]);
          String response = result[0];
-         //String capitalizedSentence = sentence.toUpperCase();
-         sendData = response.getBytes();
-         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-         serverSocket.send(sendPacket);
-         System.out.println("Sent the packet back.");
+         for (byte[] packet : packets) {
+            DatagramPacket sendPacket = new DatagramPacket(packet, packet.length, IPAddress, port);
+            serverSocket.send(sendPacket);
+            System.out.println("Sent the packet back.");
+         }
       }
    }
    
@@ -133,28 +134,32 @@ class UDPServer {
       return s;
    }
 
-    public static byte[][] segmentation(String filename) throws Exception {
-       int fileSize = 0;
-       File f = new File(filename);
-
-       fileSize = (int) f.length();
-
-       byte[][] segmentationMatrix = new byte[fileSize / 256 + 1][256];
-
-       byte[] fileInBytes = new byte[fileSize + 1];
-       FileInputStream fis = new FileInputStream(f);
-
-       fis.read(fileInBytes);
-       fis.close();
-
-       int counter = 0;
-       for (int i = 0; i < fileInBytes.length; i++) {
-           for (int j = 0; j < 256; j++) {
-               segmentationMatrix[i][j] = fileInBytes[counter++];
-           }
-       }
-
-       return segmentationMatrix;
-
+   public static byte[][] segmentation(String filename) throws Exception {
+      int fileSize = 0;
+      File f = new File(filename);
+   
+      fileSize = (int) f.length();
+   
+      byte[][] segmentationMatrix = new byte[(int)(fileSize / 256.0) + 1][256];
+   
+      byte[] fileInBytes = new byte[(int)(fileSize / 256.0) + 1];
+      FileInputStream fis = new FileInputStream(f);
+      
+      System.out.println("\nfileInBytes.len " + fileInBytes.length);
+      System.out.println("fileSize " + fileSize);
+   
+      fis.read(fileInBytes);
+      fis.close();
+   
+      int counter = 0;
+      for (int i = 0; i < fileInBytes.length; i++) {
+         for (int j = 0; j < 256; j++) {
+            //System.out.println("i: " + i + ", j: " + j);
+            segmentationMatrix[i][j] = fileInBytes[i];
+         }
+      }
+   
+      return segmentationMatrix;
+   
    }
 }	
