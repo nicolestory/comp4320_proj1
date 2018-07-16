@@ -139,16 +139,17 @@ class UDPClient {
          return packets;
       }
       System.out.println("Gremlins are attacking!");
+      
       for (byte[] packet : packets) {
          double changePacketProbability = Math.random();
          if (changePacketProbability <= gremlinProbability) {
             System.out.println("A gremlin got a packet!");
-            damagePacket(packet);
+            packet = damagePacket(packet);
          }
       }
       return packets;
    }
-   public static void damagePacket(byte[] packet) {
+   public static byte[] damagePacket(byte[] packet) {
       int numBytesDamaged = 3;
       double randNumBytesDamaged = Math.random();
       if (randNumBytesDamaged < 0.5) {
@@ -158,10 +159,10 @@ class UDPClient {
       }
       
       for (int i = 0; i < numBytesDamaged; i++) {
-         int byteToChange = (int) Math.random() * packet.length;
-         // TODO: check for duplicates?
-         //xor(packet, byteToChange);
-         packet[byteToChange] = (byte) (packet[byteToChange] ^ 0b1111111);
+         int byteToChange = (int) (Math.random() * packet.length);
+         packet[byteToChange] = (byte) (packet[byteToChange] ^ 0b01010101);
       }
+      
+      return packet;
    }
 }
