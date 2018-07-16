@@ -132,4 +132,29 @@ class UDPServer {
       }
       return s;
    }
+
+    public static byte[][] segmentation(String filename) throws Exception {
+       int fileSize = 0;
+       File f = new File(filename);
+
+       fileSize = (int) f.length();
+
+       byte[][] segmentationMatrix = new byte[fileSize / 256 + 1][256];
+
+       byte[] fileInBytes = new byte[fileSize + 1];
+       FileInputStream fis = new FileInputStream(f);
+
+       fis.read(fileInBytes);
+       fis.close();
+
+       int counter = 0;
+       for (int i = 0; i < fileInBytes.length; i++) {
+           for (int j = 0; j < 256; j++) {
+               segmentationMatrix[i][j] = fileInBytes[counter++];
+           }
+       }
+
+       return segmentationMatrix;
+
+   }
 }	
