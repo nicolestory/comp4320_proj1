@@ -31,44 +31,55 @@ class UDPClient {
       DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, portNumber);
       clientSocket.send(sendPacket);
       System.out.println("Sent a packet!\n");
-      byte[] receiveData = new byte[256];
       ArrayList<byte[]> packets = new ArrayList<byte[]>();
+      boolean packetsLeft = false;
       
       // Read in packets, and sort them:
       do {
+         byte[] receiveData = new byte[256];
          DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
          clientSocket.receive(receivePacket);
          System.out.println("Recieved a packet!"); 
          receiveData = receivePacket.getData();  
-         //System.out.println(new String(receiveData, "UTF-8")); 
+         System.out.println(new String(receiveData, "UTF-8")); 
          byte sequenceNumber = receiveData[1];
-         System.out.println(sequenceNumber);
          if (packets.size() == sequenceNumber) {
             packets.add(receiveData);
          }
          else if (packets.size() < sequenceNumber) {
+         
             for (int i = sequenceNumber; i < packets.size(); i++) {
                packets.add(null);
             }
             packets.add(sequenceNumber, receiveData);
          }
          else {
+         
             packets.add(sequenceNumber, receiveData);
          }
-      } while (morePacketsLeft(receiveData));
+      
+         packetsLeft = morePacketsLeft(receiveData);
+      } while (packetsLeft);
       clientSocket.close(); 
+      
       byte[][] packetsByteList = new byte[packets.size()][];
       packetsByteList = packets.toArray(packetsByteList);
+      
+      // Print all packets:
+      System.out.println("All packets: \n");
+      for (byte[] packet : packets) {
+         System.out.print(new String(
+            Arrays.copyOfRange(packet, 3, 256), "UTF-8"));
+      }
+      System.out.println("\n");
+   
       
       // Gremlin attack:
       gremlin(packetsByteList, gremlinProbability);
       
-      System.out.println(new String(packetsByteList[0], "UTF-8"));
-      
       // Error detection and printing to file:
       FileOutputStream out = new FileOutputStream("new_" + fileName);
       for (byte[] packet : packetsByteList) {
-         //System.out.println("Packet: \n" + new String(packet, "UTF-8"));
          errorDetected(packet);
          out.write(Arrays.copyOfRange(packet, 3, 256));
       }
@@ -115,27 +126,9 @@ class UDPClient {
       }
       
       byte checkSum = checkSum(receiveData);
-      /*
-      boolean errorExists = false;
-      String originalMessage = new String(receiveData);
-      String sumIn = getCheckSumSent(receiveData);
-      byte[] falseHeader = zeroCheckSum(receiveData);
-      checkSum = checkSum(falseHeader);
-   
-      if (sumIn.equals(Integer.toString(checkSum))) {
-         System.out.println("\n" + originalMessage);
-      } else {
-         errorExists = true;
-         String packetInfo = new String(receiveData);
-         System.out.println("\nAn error was detected in the following packet: ");
-         System.out.println(originalMessage);
-      }
-      return errorExists; */
-      System.out.println("Checksum: " + checkSum + ", receiveData[0]: " + receiveData[0]);
       if (receiveData[0] != checkSum) {
          System.out.println("An error was detected in the following packet: ");
          System.out.println(new String(receiveData, "UTF-8"));
-         System.out.println("Checksum: " + checkSum + ", receiveData[0]: " + receiveData[0]);
          System.out.println(receiveData[1]);
       }
       return false;
@@ -147,41 +140,7 @@ class UDPClient {
       for (int i = 1; i < data[2]; i++) {
          sum += (int) data[i];
       }
-      System.out.println("Checksum: " + sum);
       return (byte) sum;
-   } 
-   
-   public static String getCheckSumSent(byte[] input) {
-      String checkSum = "";
-   
-      byte[] byteCheckSum = new byte[5];
-      String info = new String(input);
-      int index = info.indexOf(":") + 1;
-      int j = 0;
-      for (int i = index + 1; i < index + 6; i++) {
-         byteCheckSum[j] = input[i];
-         j++;
-      }
-      checkSum = new String(byteCheckSum);
-   
-      boolean leadingZeros = true;
-      while (leadingZeros) {
-         leadingZeros = checkSum.startsWith("0");
-         if (leadingZeros) {
-            checkSum = checkSum.substring(1);
-         }
-      }
-      return checkSum;
-   }
-   
-   public static byte[] zeroCheckSum(byte[] message) {
-      String info = new String(message);
-      int index = info.indexOf(":") + 1;
-   
-      for (int i = index + 1; i < index + 6; i++) {
-         message[i] = 48;
-      }
-      return message;
    }
    
    public static byte[][] gremlin(byte[][] packets, double probability) {
