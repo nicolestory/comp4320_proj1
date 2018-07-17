@@ -39,8 +39,9 @@ class UDPClient {
          DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
          clientSocket.receive(receivePacket);
          System.out.println("Recieved a packet!"); 
-         receiveData = receivePacket.getData();   
-         byte sequenceNumber = receiveData[2];
+         receiveData = receivePacket.getData();  
+         System.out.println(new String(receiveData, "UTF-8")); 
+         byte sequenceNumber = receiveData[1];
          if (packets.size() == sequenceNumber) {
             packets.add(receiveData);
          }
@@ -51,7 +52,7 @@ class UDPClient {
             packets.add(receiveData);
          }
          else {
-            packets.add(sequenceNumber - 1, receiveData);
+            packets.add(sequenceNumber, receiveData);
          }
       } while (morePacketsLeft(receiveData));
       clientSocket.close(); 
@@ -65,7 +66,7 @@ class UDPClient {
       FileOutputStream out = new FileOutputStream("new_" + fileName);
       for (byte[] packet : packetsByteList) {
          errorDetected(packet);
-         out.write(Arrays.copyOfRange(packet, 3, packet[2]));
+         out.write(Arrays.copyOfRange(packet, 3, 256));
       }
       out.close();
    }
@@ -103,13 +104,14 @@ class UDPClient {
       }
       return true;
    }
-   public static boolean errorDetected(byte[] receiveData) {
+   public static boolean errorDetected(byte[] receiveData) throws Exception {
       if (receiveData == null) {
          System.out.println("Packet was lost!");
          return true;
       }
       
-      int checkSum;
+      byte checkSum = checkSum(receiveData);
+      /*
       boolean errorExists = false;
       String originalMessage = new String(receiveData);
       String sumIn = getCheckSumSent(receiveData);
@@ -124,14 +126,21 @@ class UDPClient {
          System.out.println("\nAn error was detected in the following packet: ");
          System.out.println(originalMessage);
       }
-      return errorExists;
+      return errorExists; */
+      
+      if (receiveData[0] != checkSum) {
+         System.out.println("An error was detected in the following packet: ");
+         System.out.println(new String(receiveData, "UTF-8"));
+         System.out.println("receiveData.len: " + receiveData.length);
+      }
+      return false;
    }
    
-   public static int checkSum(byte[] data) {
-      int sum = 0;
+   public static byte checkSum(byte[] data) {
+      byte sum = 0;
    
       for (int i = 1; i < data.length; i++) {
-         sum += (int) data[i];
+         sum += data[i];
       }
       return sum;
    } 
@@ -197,15 +206,16 @@ class UDPClient {
       
       for (int i = 0; i < numBytesDamaged; i++) {
          int byteToChange = (int) (Math.random() * packet.length);
-         packet[byteToChange] = (byte) (packet[byteToChange] ^ 0b01010101);
+         packet[byteToChange] = (byte) (packet[byteToChange] ^ 0xFF);
+         System.out.println("Changed a byte!");
       }
       
       return packet;
    }
    
    private static boolean morePacketsLeft(byte[] packet) {
-      int packetSize = packet[2];
-      if (packet[packetSize - 1] == 0b0) {
+      int packetSize = packet[2] & 0xFF;
+      if (packet[packetSize] == 0b0) {
          return false;
       }
       return true;
