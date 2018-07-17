@@ -65,13 +65,15 @@ class UDPServer {
       }
       return errorExists;
    }
-   public static byte checkSum(byte[] data) {
-      byte sum = 0;
    
-      for (int i = 1; i < data.length; i++) {
-         sum += data[i];
+   public static byte checkSum(byte[] data) {
+      int sum = 0;
+   
+      for (int i = 1; i < data[2]; i++) {
+         sum += (int) data[i];
       }
-      return sum;
+      System.out.println("Checksum: " + sum);
+      return (byte) sum;
    }
 
    public static String[] parseRequest(String request) {
@@ -140,7 +142,7 @@ class UDPServer {
    
       fileSize = (int) f.length();
    
-      byte[][] segmentationMatrix = new byte[(int)(fileSize / 256.0) + 2][256];
+      byte[][] segmentationMatrix = new byte[(int)(fileSize / 253.0) + 2][256];
       int numBytes = segmentationMatrix.length - 2;
    
       byte[] fileInBytes = new byte[fileSize];//[(int)(fileSize / 256.0) + 1];
@@ -151,25 +153,20 @@ class UDPServer {
    
       fis.read(fileInBytes);
       fis.close();
-      
-      int lastPacketSize = 0;      
    
       for (int i = 0; i < numBytes; i++) {
          for (int j = 3; j < 256; j++) {
             //System.out.println("i: " + i + ", j: " + j);
             segmentationMatrix[i][j] = fileInBytes[(i * 253) + j - 3];
-            if (segmentationMatrix[i][j] == 0b0) {
-               lastPacketSize = j;
-            }
          }
       }
    
       // Get last packet size:
-   
+      int lastPacketSize = fileSize % 253;
    
       // Header info:
       for (int k = 0; k < numBytes; k++) {
-         segmentationMatrix[k][0] = (byte) checkSum(segmentationMatrix[k]); // Checksum
+         segmentationMatrix[k][0] = checkSum(segmentationMatrix[k]); // Checksum
          segmentationMatrix[k][1] = (byte) k; // Sequence number
          // Packet Size
          if (k == fileInBytes.length - 1) {
@@ -179,6 +176,9 @@ class UDPServer {
             segmentationMatrix[k][2] = (byte) 255;
          }
       }
+      byte[] lastPacket = {0, (byte) numBytes, 4, 0b0};
+      lastPacket[0] = checkSum(lastPacket);
+      segmentationMatrix[numBytes] = lastPacket;
    
       return segmentationMatrix;
    
