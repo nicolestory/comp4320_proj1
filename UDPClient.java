@@ -126,10 +126,10 @@ class UDPClient {
       }
       
       byte checkSum = checkSum(receiveData);
+      
       if (receiveData[0] != checkSum) {
-         System.out.println("An error was detected in the following packet: ");
+         System.out.println("An error was detected in packet " + receiveData[1] + ": ");
          System.out.println(new String(receiveData, "UTF-8"));
-         System.out.println(receiveData[1]);
       }
       return false;
    }
@@ -137,10 +137,10 @@ class UDPClient {
    public static byte checkSum(byte[] data) {
       int sum = 0;
    
-      for (int i = 1; i < data[2]; i++) {
-         sum += (int) data[i];
+      for (int i = 1; i < (int) (data[2] & 0xFF); i++) {
+         sum += (int) (data[i] & 0xFF);
       }
-      return (byte) sum;
+      return (byte) (sum % 256);
    }
    
    public static byte[][] gremlin(byte[][] packets, double probability) {
@@ -158,8 +158,11 @@ class UDPClient {
             packet = damagePacket(packet);
          }
       }
+      System.out.println();
+      
       return packets;
    }
+   
    public static byte[] damagePacket(byte[] packet) {
       int numBytesDamaged = 3;
       double randNumBytesDamaged = Math.random();

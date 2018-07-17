@@ -26,13 +26,11 @@ class UDPServer {
          int port = receivePacket.getPort();
          String[] result = parseRequest(sentence);
          byte[][] packets = segmentation(result[1]);
-         System.out.println(result[0]);
-         System.out.println(result[1]);
          String response = result[0];
          for (byte[] packet : packets) {
             DatagramPacket sendPacket = new DatagramPacket(packet, packet.length, IPAddress, port);
             serverSocket.send(sendPacket);
-            System.out.println("Sent the packet back.");
+            System.out.println("Sent a packet back.");
          }
       }
    }
@@ -52,28 +50,14 @@ class UDPServer {
       }
       return true;
    }
-   public static boolean errorDetected(byte[] receiveData) {
-      int checkSum;
-      boolean errorExists = false;
-      String originalMessage = new String(receiveData);
-      
-      if (errorExists) {
-         String packetInfo = new String(receiveData);
-         System.out.println("\nAn error was detected in the following packet: ");
-         System.out.println(originalMessage);
-         System.out.println("\nTime Out!");
-      }
-      return errorExists;
-   }
    
    public static byte checkSum(byte[] data) {
       int sum = 0;
    
-      for (int i = 1; i < data[2]; i++) {
-         sum += (int) data[i];
+      for (int i = 1; i < (int) (data[2] & 0xFF); i++) {
+         sum += (int) (data[i] & 0xFF);
       }
-      System.out.println("Checksum: " + sum);
-      return (byte) sum;
+      return (byte) (sum % 256);
    }
 
    public static String[] parseRequest(String request) {
@@ -142,21 +126,17 @@ class UDPServer {
    
       fileSize = (int) f.length();
    
-      byte[][] segmentationMatrix = new byte[(int)(fileSize / 253.0) + 2][256];
-      int numBytes = segmentationMatrix.length - 2;
+      byte[][] segmentationMatrix = new byte[(int)(fileSize / 253.0) + 1][256];
+      int numBytes = segmentationMatrix.length - 1;
    
-      byte[] fileInBytes = new byte[fileSize];//[(int)(fileSize / 256.0) + 1];
+      byte[] fileInBytes = new byte[fileSize];
       FileInputStream fis = new FileInputStream(f);
-      
-      System.out.println("\nfileInBytes.len " + fileInBytes.length);
-      System.out.println("fileSize " + fileSize);
    
       fis.read(fileInBytes);
       fis.close();
    
       for (int i = 0; i < numBytes; i++) {
          for (int j = 3; j < 256; j++) {
-            //System.out.println("i: " + i + ", j: " + j);
             segmentationMatrix[i][j] = fileInBytes[(i * 253) + j - 3];
          }
       }
@@ -166,7 +146,6 @@ class UDPServer {
    
       // Header info:
       for (int k = 0; k < numBytes; k++) {
-         segmentationMatrix[k][0] = checkSum(segmentationMatrix[k]); // Checksum
          segmentationMatrix[k][1] = (byte) k; // Sequence number
          // Packet Size
          if (k == fileInBytes.length - 1) {
@@ -175,6 +154,8 @@ class UDPServer {
          else {
             segmentationMatrix[k][2] = (byte) 255;
          }
+         segmentationMatrix[k][0] = checkSum(segmentationMatrix[k]); // Checksum
+      
       }
       byte[] lastPacket = {0, (byte) numBytes, 4, 0b0};
       lastPacket[0] = checkSum(lastPacket);
@@ -183,18 +164,4 @@ class UDPServer {
       return segmentationMatrix;
    
    }
-
-   /*public static void send(String filename, int portNumber, InetAddress IPAddress) {
-	File f = new File(filename);
-	int fileSize = (int) f.length();
-	byte[][] segmentationMatrix = segmentation(filename);
-	byte[] packet = new byte[256];
-	for (int i = 0; i < fileSize; i++) {
-		for (int j = 0; j < 256; j++) {
-			packet[j] = segmentationMatrix[i][j];
-		}
-		
-	}
-
-   }*/
 }	
