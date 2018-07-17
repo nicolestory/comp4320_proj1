@@ -84,6 +84,7 @@ class UDPClient {
          out.write(Arrays.copyOfRange(packet, 3, 256));
       }
       out.close();
+	launchBrowser("new_" + fileName);
    }
    
    private static boolean parse_args(String args[])
@@ -188,4 +189,13 @@ class UDPClient {
       }
       return true;
    }
+
+	public static void launchBrowser(String fileName) {
+		Process p;
+		try {
+			p = Runtime.getRuntime().exec("firefox " + fileName);
+		} catch (Exception e) {
+			System.out.println("Error opening file: " + fileName);
+		}
+	}
 }
