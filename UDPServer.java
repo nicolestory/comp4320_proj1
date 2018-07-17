@@ -140,9 +140,9 @@ class UDPServer {
    
       fileSize = (int) f.length();
    
-      byte[][] segmentationMatrix = new byte[(int)(fileSize / 256.0) + 1][256];
+      byte[][] segmentationMatrix = new byte[(int)(fileSize / 254.0) + 1][256];
    
-      byte[] fileInBytes = new byte[(int)(fileSize / 256.0) + 1];
+      byte[] fileInBytes = new byte[(int)(fileSize / 254.0) + 1];
       FileInputStream fis = new FileInputStream(f);
       
       System.out.println("\nfileInBytes.len " + fileInBytes.length);
@@ -151,9 +151,8 @@ class UDPServer {
       fis.read(fileInBytes);
       fis.close();
    
-      int counter = 0;
       for (int i = 0; i < fileInBytes.length; i++) {
-         for (int j = 0; j < 256; j++) {
+         for (int j = 0; j < 254; j++) {
             //System.out.println("i: " + i + ", j: " + j);
             segmentationMatrix[i][j] = fileInBytes[i];
          }
