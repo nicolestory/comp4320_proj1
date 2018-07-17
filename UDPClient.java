@@ -40,8 +40,9 @@ class UDPClient {
          clientSocket.receive(receivePacket);
          System.out.println("Recieved a packet!"); 
          receiveData = receivePacket.getData();  
-         System.out.println(new String(receiveData, "UTF-8")); 
+         //System.out.println(new String(receiveData, "UTF-8")); 
          byte sequenceNumber = receiveData[1];
+         System.out.println(sequenceNumber);
          if (packets.size() == sequenceNumber) {
             packets.add(receiveData);
          }
@@ -49,7 +50,7 @@ class UDPClient {
             for (int i = sequenceNumber; i < packets.size(); i++) {
                packets.add(null);
             }
-            packets.add(receiveData);
+            packets.add(sequenceNumber, receiveData);
          }
          else {
             packets.add(sequenceNumber, receiveData);
@@ -62,9 +63,12 @@ class UDPClient {
       // Gremlin attack:
       gremlin(packetsByteList, gremlinProbability);
       
+      System.out.println(new String(packetsByteList[0], "UTF-8"));
+      
       // Error detection and printing to file:
       FileOutputStream out = new FileOutputStream("new_" + fileName);
       for (byte[] packet : packetsByteList) {
+         //System.out.println("Packet: \n" + new String(packet, "UTF-8"));
          errorDetected(packet);
          out.write(Arrays.copyOfRange(packet, 3, 256));
       }
@@ -127,22 +131,24 @@ class UDPClient {
          System.out.println(originalMessage);
       }
       return errorExists; */
-      
+      System.out.println("Checksum: " + checkSum + ", receiveData[0]: " + receiveData[0]);
       if (receiveData[0] != checkSum) {
          System.out.println("An error was detected in the following packet: ");
          System.out.println(new String(receiveData, "UTF-8"));
-         System.out.println("receiveData.len: " + receiveData.length);
+         System.out.println("Checksum: " + checkSum + ", receiveData[0]: " + receiveData[0]);
+         System.out.println(receiveData[1]);
       }
       return false;
    }
    
    public static byte checkSum(byte[] data) {
-      byte sum = 0;
+      int sum = 0;
    
-      for (int i = 1; i < data.length; i++) {
-         sum += data[i];
+      for (int i = 1; i < data[2]; i++) {
+         sum += (int) data[i];
       }
-      return sum;
+      System.out.println("Checksum: " + sum);
+      return (byte) sum;
    } 
    
    public static String getCheckSumSent(byte[] input) {
