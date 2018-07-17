@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 class UDPClient {
 
@@ -24,17 +25,50 @@ class UDPClient {
       DatagramSocket clientSocket = new DatagramSocket();
       InetAddress IPAddress = InetAddress.getByName(serverHostname);
       byte[] sendData = new byte[1024];
-      byte[] receiveData = new byte[1024];
       sendData = request.getBytes();
      
       DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, portNumber);
       clientSocket.send(sendPacket);
       System.out.println("Sent a packet!\n");
-      DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-      clientSocket.receive(receivePacket);
-      String modifiedSentence = new String(receivePacket.getData());
-      System.out.println("Message from UDP Server:\n" + modifiedSentence);
+      byte[] receiveData = new byte[256];
+      ArrayList<byte[]> packets = new ArrayList<byte[]>();
+      
+      // Read in packets, and sort them:
+      do {
+         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+         clientSocket.receive(receivePacket);
+         System.out.println("Recieved a packet!");
+         receiveData = receivePacket.getData();
+         byte sequenceNumber = receiveData[2];
+         if (packets.size() == sequenceNumber) {
+            packets.add(receiveData);
+         }
+         else if (packets.size() < sequenceNumber) {
+            for (int i = sequenceNumber; i < packets.size(); i++) {
+               packets.add(null);
+            }
+            packets.add(receiveData);
+         }
+         else {
+            packets.add(sequenceNumber - 1, receiveData);
+         }
+      } while (morePacketsLeft(receiveData));
       clientSocket.close(); 
+      byte[][] packetsByteList = new byte[packets.size()][];
+      packetsByteList = packets.toArray(packetsByteList);
+      
+      // Gremlin attack:
+      gremlin(packetsByteList, gremlinProbability);
+      
+      // Error detection and printing to file:
+      FileOutputStream out = new FileOutputStream("new_" + fileName);
+      for (byte[] packet : packetsByteList) {
+         errorDetected(packet);
+         out.write(packet);
+      }
+      out.close();
+      
+      
    }
    
    private static boolean parse_args(String args[])
@@ -71,6 +105,11 @@ class UDPClient {
       return true;
    }
    public static boolean errorDetected(byte[] receiveData) {
+      if (receiveData == null) {
+         System.out.println("Packet was lost!");
+         return true;
+      }
+      
       int checkSum;
       boolean errorExists = false;
       String originalMessage = new String(receiveData);
@@ -164,5 +203,13 @@ class UDPClient {
       }
       
       return packet;
+   }
+   
+   private static boolean morePacketsLeft(byte[] packet) {
+      int packetSize = packet[2];
+      if (packet[packetSize - 1] == 0b0) {
+         return false;
+      }
+      return true;
    }
 }
