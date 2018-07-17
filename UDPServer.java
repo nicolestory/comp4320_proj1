@@ -140,9 +140,9 @@ class UDPServer {
    
       fileSize = (int) f.length();
    
-      byte[][] segmentationMatrix = new byte[(int)(fileSize / 254.0) + 1][256];
+      byte[][] segmentationMatrix = new byte[(int)(fileSize / 256.0) + 2][256];
    
-      byte[] fileInBytes = new byte[(int)(fileSize / 254.0) + 1];
+      byte[] fileInBytes = new byte[(int)(fileSize / 256.0) + 1];
       FileInputStream fis = new FileInputStream(f);
       
       System.out.println("\nfileInBytes.len " + fileInBytes.length);
@@ -150,15 +150,50 @@ class UDPServer {
    
       fis.read(fileInBytes);
       fis.close();
-   
+      
+      int lastPacketSize = 0;      
+
       for (int i = 0; i < fileInBytes.length; i++) {
-         for (int j = 0; j < 254; j++) {
+         for (int j = 3; j < 256; j++) {
             //System.out.println("i: " + i + ", j: " + j);
             segmentationMatrix[i][j] = fileInBytes[i];
+	    if (segmentationMatrix[i][j] == 0b0) {
+		lastPacketSize = j;
+	    }
          }
+      }
+
+      // Get last packet size:
+
+
+      // Header info:
+      for (int k = 0; k < fileInBytes.length; k++) {
+	      segmentationMatrix[k][0] = (byte) checkSum(segmentationMatrix[k]); // Checksum
+	      segmentationMatrix[k][1] = (byte) k; // Sequence number
+	      // Packet Size
+	      if (k == fileInBytes.length - 1) {
+		segmentationMatrix[k][2] = (byte) 256;
+	      }
+	      else {
+		segmentationMatrix[k][2] = (byte) lastPacketSize;
+	      }
       }
    
       return segmentationMatrix;
    
    }
+
+   /*public static void send(String filename, int portNumber, InetAddress IPAddress) {
+	File f = new File(filename);
+	int fileSize = (int) f.length();
+	byte[][] segmentationMatrix = segmentation(filename);
+	byte[] packet = new byte[256];
+	for (int i = 0; i < fileSize; i++) {
+		for (int j = 0; j < 256; j++) {
+			packet[j] = segmentationMatrix[i][j];
+		}
+		
+	}
+
+   }*/
 }	
