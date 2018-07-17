@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 class UDPClient {
 
@@ -37,8 +38,8 @@ class UDPClient {
       do {
          DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
          clientSocket.receive(receivePacket);
-         System.out.println("Recieved a packet!");
-         receiveData = receivePacket.getData();
+         System.out.println("Recieved a packet!"); 
+         receiveData = receivePacket.getData();   
          byte sequenceNumber = receiveData[2];
          if (packets.size() == sequenceNumber) {
             packets.add(receiveData);
@@ -64,11 +65,9 @@ class UDPClient {
       FileOutputStream out = new FileOutputStream("new_" + fileName);
       for (byte[] packet : packetsByteList) {
          errorDetected(packet);
-         out.write(packet);
+         out.write(Arrays.copyOfRange(packet, 3, packet[2]));
       }
       out.close();
-      
-      
    }
    
    private static boolean parse_args(String args[])
@@ -124,7 +123,6 @@ class UDPClient {
          String packetInfo = new String(receiveData);
          System.out.println("\nAn error was detected in the following packet: ");
          System.out.println(originalMessage);
-         System.out.println("\nTime Out!");
       }
       return errorExists;
    }
@@ -132,7 +130,7 @@ class UDPClient {
    public static int checkSum(byte[] data) {
       int sum = 0;
    
-      for (int i = 0; i < data.length; i++) {
+      for (int i = 1; i < data.length; i++) {
          sum += (int) data[i];
       }
       return sum;
